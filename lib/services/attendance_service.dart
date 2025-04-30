@@ -12,13 +12,12 @@ class AttendanceService {
 
   final String apiUrl = '${dotenv.env['API_URL'] ?? 'https://default-url.com'}/auth/school-module';
 
-  Future<bool> markAttendance(String userId,String userType,String sessionId) async {
+  Future<Map<String, dynamic>> markAttendance(String userId,String userType,String sessionId) async {
     final body = {
       'user_id': userId,
       'user_type': userType,
       'session_id': sessionId,
     };
-    print('apiSubmitbody : '+body.toString());
     try {
       final response = await http.post(
         Uri.parse('$apiUrl/attendance/submit-attendance'),
@@ -27,19 +26,24 @@ class AttendanceService {
       );
       if (response.statusCode == 200 || response.statusCode == 201) {
         final res = ResponseModel.fromJson(jsonDecode(response.body));
-        if (res.errors != null) {
-          return false;
+        if (res.errors != null && res.errors is List && res.errors.length > 0) {
+          return {'success': false, 'error': res.errors.toString()};
         }
-        return true;
+        return {'success': true};
       } else {
-             var someValue= jsonEncode(response.body);
-              print('apiSubmitError : $someValue');
-
-        return false;
+        var errorMsg = '';
+        try {
+          final decoded = jsonDecode(response.body);
+          errorMsg = decoded['message'] ?? decoded['error'] ?? response.body;
+        } catch (e) {
+          errorMsg = response.body;
+        }
+        // Avoid using print statements
+        // Use interpolation to compose strings and values
+        return {'success': false, 'error': errorMsg};
       }
     } catch (e) {
-      print('apiSubmitError : $e');
-      return false;
+      return {'success': false, 'error': e.toString()};
     }
   }
 
@@ -59,6 +63,7 @@ class AttendanceService {
         return session;
       }
     } catch (e) {
+      // Optionally log or handle the error
     }
     return null;
   }

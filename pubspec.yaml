@@ -37,6 +37,7 @@ dependencies:
   flutter_dotenv: ^5.2.1
   fluttertoast: ^8.2.12
   dotenv: ^4.2.0
+  flutter_riverpod: ^2.6.1
 
 dev_dependencies:
   flutter_test:

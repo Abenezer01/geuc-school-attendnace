@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_attendance/services/attendance_service.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 class AttendanceScreen extends StatefulWidget {
   const AttendanceScreen({Key? key}) : super(key: key);
@@ -23,18 +24,27 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       return;
     }
     AttendanceService service = AttendanceService();
-    bool success = await service.markAttendance(
+    var result = await service.markAttendance(
       userId,
-      '',
-      ''
+      'userType',
+      'sessionId'
     );
     setState(() {
-      if (success) {
+      if (result['success'] == true) {
         _message = 'Attendance marked for user $userId as $_selectedStatus.';
         _userIdController.clear();
         _remarksController.clear();
       } else {
-        _message = 'Failed to mark attendance. Please try again.';
+        String errorMsg = result['error'] ?? 'Failed to mark attendance. Please try again.';
+        _message = errorMsg;
+        Fluttertoast.showToast(
+          msg: errorMsg,
+          toastLength: Toast.LENGTH_LONG,
+          gravity: ToastGravity.BOTTOM,
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+          fontSize: 16.0
+        );
       }
     });
   }

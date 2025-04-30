@@ -46,7 +46,6 @@ class _QRScanScreenState extends State<QRScanScreen> {
         // Try to decode as JSON
         decoded = jsonDecode(rawValue);
         print('userType decoded $decoded');
-        print(decoded.containsKey('bio'));
         if (decoded is Map<String, dynamic>) {
 
           if (decoded.containsKey('type')) {
@@ -74,7 +73,7 @@ class _QRScanScreenState extends State<QRScanScreen> {
           } else if (userType == 'student') {
             modelInstance = Student(
               id: (decoded['id'] ?? '') ?? '',
-              memberId: (decoded['memberId'] ?? '') ?? '',
+              memberId: (decoded['member_id'] ?? '') ?? '',
               member: Member(
                 id: (decoded['member']?['id'] ?? '') ?? '',
                 name: (decoded['member']?['name'] ?? '') ?? '',
@@ -84,7 +83,6 @@ class _QRScanScreenState extends State<QRScanScreen> {
             );
           }
         } else {
-          userId = rawValue;
         }
       } catch (e) {
         // Not JSON, treat as plain userId only if it looks like an ID, otherwise show error
@@ -101,7 +99,7 @@ class _QRScanScreenState extends State<QRScanScreen> {
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
-              title: Text('Confirm Attendance'+(userType =='teacher'? ' for ${modelInstance?.member.name}': '')),
+              title: Text('Confirm Attendance${userType =='teacher'? ' for ${modelInstance?.member.name}': ''}'),
               content: Text('Do you want to mark attendance for $userType ' + (modelInstance?.member?.name ?? '')),
               actions: <Widget>[
                 TextButton(
@@ -115,18 +113,27 @@ class _QRScanScreenState extends State<QRScanScreen> {
                   onPressed: () async {
                     Navigator.of(context).pop();
                     AttendanceService service = AttendanceService();
-                    bool success = await service.markAttendance(
+                    var result = await service.markAttendance(
                       userId.toString(),
                       userType,
                       widget.session?.id?? '',
                     );
+                    print('result $result');
                     setState(() {
                       _scanResult = userId;
-                      if (success) {
+                      if (result['success'] == true) {
                         _message = 'Attendance marked for $userType $userId.';
                       } else {
-                        
-                        _message = 'Failed to mark attendance. Please try again.';
+                        String errorMsg = result['error'] ?? 'Failed to mark attendance. Please try again.';
+                        _message = errorMsg;
+                        Fluttertoast.showToast(
+                          msg: errorMsg,
+                          toastLength: Toast.LENGTH_LONG,
+                          gravity: ToastGravity.BOTTOM,
+                          backgroundColor: Colors.red,
+                          textColor: Colors.white,
+                          fontSize: 16.0
+                        );
                       }
                       _attendanceMarked = true;
                     });
@@ -186,6 +193,7 @@ class _QRScanScreenState extends State<QRScanScreen> {
               onPressed: () {
                 setState(() {
                   _attendanceMarked = false;
+                  _toastShown = false;
                   _message = null;
                   _scanResult = null;
                 });

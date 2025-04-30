@@ -24,28 +24,28 @@ class AttendanceRecord {
   factory AttendanceRecord.fromJson(Map<String, dynamic> json) {
     return AttendanceRecord(
       id: json['id'],
-      userType: json['userType'],
-      userId: json['userId'],
-      sessionclassId: json['sessionclassId'],
+      userType: json['user_type'],
+      userId: json['user_id'],
+      sessionclassId: json['session_class_id'],
       status: json['status'],
       remarks: json['remarks'],
-      attendanceDate: DateTime.parse(json['attendanceDate']),
-      createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
-      updatedAt: json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : null,
+      attendanceDate: DateTime.parse(json['attendance_date']),
+      createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']) : null,
+      updatedAt: json['updated_at'] != null ? DateTime.parse(json['updated_at']) : null,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'userType': userType,
-      'userId': userId,
-      'sessionclassId': sessionclassId,
+      'user_type': userType,
+      'user_id': userId,
+      'session_class_id': sessionclassId,
       'status': status,
       'remarks': remarks,
-      'attendanceDate': attendanceDate.toIso8601String(),
-      'createdAt': createdAt?.toIso8601String(),
-      'updatedAt': updatedAt?.toIso8601String(),
+      'attendance_date': attendanceDate.toIso8601String(),
+      'created_at': createdAt?.toIso8601String(),
+      'updated_at': updatedAt?.toIso8601String(),
     };
   }
 }
