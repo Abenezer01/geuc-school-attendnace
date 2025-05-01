@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_attendance/models/member.dart';
 import 'package:flutter_attendance/models/session.dart';
-import 'package:flutter_attendance/models.dart';
+import 'package:flutter_attendance/models/student.dart';
+import 'package:flutter_attendance/models/teacher.dart';
+
 import 'package:flutter_attendance/services/attendance_service.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'dart:convert';
+
 class QRScanScreen extends StatefulWidget {
   final Session? session;
   const QRScanScreen({Key? key, this.session}) : super(key: key);
@@ -26,65 +30,65 @@ class _QRScanScreenState extends State<QRScanScreen> {
     final String? rawValue = barcode.rawValue;
     _toastShown = true;
     Fluttertoast.showToast(
-      msg: "QR code detected: $rawValue",
-      toastLength: Toast.LENGTH_SHORT,
-      gravity: ToastGravity.BOTTOM,
-      timeInSecForIosWeb: 1,
-      backgroundColor: Colors.black,
-      textColor: Colors.white,
-      fontSize: 16.0
-    );
+        msg: "QR code detected: $rawValue",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.black,
+        textColor: Colors.white,
+        fontSize: 16.0);
     if (rawValue != null && rawValue.isNotEmpty) {
       dynamic decoded;
       String? userId;
       String userType = 'student';
-      print('decoded $rawValue');
-      
+
       try {
         decoded = rawValue;
-        
+
         // Try to decode as JSON
         decoded = jsonDecode(rawValue);
         print('userType decoded $decoded');
         if (decoded is Map<String, dynamic>) {
-
           if (decoded.containsKey('type')) {
             userType = decoded['type'];
           } else if (decoded.containsKey('class_id')) {
             userType = 'student';
-          } else if (decoded.containsKey('bio') || decoded.containsKey('expertise')) {
+          } else if (decoded.containsKey('bio') ||
+              decoded.containsKey('expertise')) {
             userType = 'teacher';
-          } else if (decoded.containsKey('memberId') && decoded.containsKey('classId')) {
+          } else if (decoded.containsKey('memberId') &&
+              decoded.containsKey('classId')) {
             userType = 'student';
           }
           userId = decoded['id'] ?? decoded['userId'] ?? decoded['member_id'];
           // Instantiate model
           if (userType == 'teacher') {
             modelInstance = Teacher(
-              id: (decoded['id'] ?? '') ?? '',
-              memberId: (decoded['memberId'] ?? '') ?? '',
-              bio: (decoded['bio'] ?? '') ?? '',
-              member: Member(
-                id: (decoded['member']?['id'] ?? '') ?? '',
-                name: (decoded['member']?['name'] ?? '') ?? '',
-                email: (decoded['member']?['email'] ?? '') ?? '',
-              ),
+              id: decoded['id'] ?? '',
+              memberId: decoded['member_id'] ?? '',
+              bio: decoded['bio'] ?? '',
+              member: decoded['member'] != null
+                  ? Member.fromJson(decoded['member'])
+                  : Member(id: '', name: '', email: ''),
             );
           } else if (userType == 'student') {
             modelInstance = Student(
-              id: (decoded['id'] ?? '') ?? '',
-              memberId: (decoded['member_id'] ?? '') ?? '',
-              member: Member(
-                id: (decoded['member']?['id'] ?? '') ?? '',
-                name: (decoded['member']?['name'] ?? '') ?? '',
-                email: (decoded['member']?['email'] ?? '') ?? '',
-              ),
-              classId: (decoded['classId'] ?? decoded['class_id'] ?? '') ?? '',
+              id: decoded['id'] ?? '',
+              memberId: decoded['member_id'] ?? '',
+              member: decoded['member'] != null
+                  ? Member.fromJson(decoded['member'])
+                  : Member(id: '', name: '', email: ''),
+              classId: decoded['class_id'] ?? '',
             );
           }
         } else {
+          userId = rawValue;
         }
+        print('modelInstance ${modelInstance?.toJson()}');
       } catch (e) {
+        print('modelInstanceerror $e');
+        print('decoded $decoded');
+
         // Not JSON, treat as plain userId only if it looks like an ID, otherwise show error
         if (rawValue.trim().startsWith('{') && !rawValue.trim().endsWith('}')) {
           setState(() {
@@ -99,8 +103,10 @@ class _QRScanScreenState extends State<QRScanScreen> {
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
-              title: Text('Confirm Attendance${userType =='teacher'? ' for ${modelInstance?.member.name}': ''}'),
-              content: Text('Do you want to mark attendance for $userType ' + (modelInstance?.member?.name ?? '')),
+              title: Text(
+                  'Confirm Attendance${userType == 'teacher' ? ' for ${modelInstance?.member.name}' : ''}'),
+              content: Text(
+                  'Do you want to mark attendance for $userType ${modelInstance?.member.name}'),
               actions: <Widget>[
                 TextButton(
                   child: Text('Cancel'),
@@ -116,7 +122,7 @@ class _QRScanScreenState extends State<QRScanScreen> {
                     var result = await service.markAttendance(
                       userId.toString(),
                       userType,
-                      widget.session?.id?? '',
+                      widget.session?.id ?? '',
                     );
                     print('result $result');
                     setState(() {
@@ -124,16 +130,16 @@ class _QRScanScreenState extends State<QRScanScreen> {
                       if (result['success'] == true) {
                         _message = 'Attendance marked for $userType $userId.';
                       } else {
-                        String errorMsg = result['error'] ?? 'Failed to mark attendance. Please try again.';
+                        String errorMsg = result['error'] ??
+                            'Failed to mark attendance. Please try again.';
                         _message = errorMsg;
                         Fluttertoast.showToast(
-                          msg: errorMsg,
-                          toastLength: Toast.LENGTH_LONG,
-                          gravity: ToastGravity.BOTTOM,
-                          backgroundColor: Colors.red,
-                          textColor: Colors.white,
-                          fontSize: 16.0
-                        );
+                            msg: errorMsg,
+                            toastLength: Toast.LENGTH_LONG,
+                            gravity: ToastGravity.BOTTOM,
+                            backgroundColor: Colors.red,
+                            textColor: Colors.white,
+                            fontSize: 16.0);
                       }
                       _attendanceMarked = true;
                     });

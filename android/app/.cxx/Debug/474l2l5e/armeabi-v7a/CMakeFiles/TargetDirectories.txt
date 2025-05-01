@@ -1,0 +1,2 @@
+C:/Users/REAB/Documents/Projects/GEUC/frontend/geuc-school-attendnace/android/app/.cxx/Debug/474l2l5e/armeabi-v7a/CMakeFiles/edit_cache.dir
+C:/Users/REAB/Documents/Projects/GEUC/frontend/geuc-school-attendnace/android/app/.cxx/Debug/474l2l5e/armeabi-v7a/CMakeFiles/rebuild_cache.dir
